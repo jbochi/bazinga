@@ -22,21 +22,24 @@ def file_hash(path):
 
 class Bazinga(Plugin):
     name = 'bazinga'
-    hash_file = '.nosehashes'
+    hash_file = '.nosebazinga'
     graph = {}
     hashes = {}
+    known_graph = {}
     known_hashes = {}
     failed_modules = set()
-    files_tested = set()
-    _missing = []
+    _file_updated = {}
+    _ignored = set()
     _built_in_path = os.path.dirname(os.__file__)
 
     def configure(self, options, conf):
         self.hash_file = os.path.join(conf.workingDir, self.hash_file)
         if os.path.isfile(self.hash_file):
             f = open(self.hash_file, 'r')
-            self.known_hashes = load(f)
+            data = load(f)
             f.close()
+            self.known_hashes = data['hashes']
+            self.known_graph = data['graph']
         Plugin.configure(self, options, conf)
 
     def afterTest(self, test):
@@ -45,60 +48,86 @@ class Bazinga(Plugin):
             filename = test.address()[0]
             self.failed_modules.add(filename)
 
-    def dependencies(self, path):
-        if os.path.dirname(path) == self._built_in_path:
-            log.debug('Ignoring built-in module: %s' % (path,))
-            return []
-
+    def inspect_dependencies(self, path):
         try:
             files, _ = find_dependencies(path, verbose=False, process_pragmas=False)
         except TypeError, err:
-            if path not in self._missing:
-                self._missing.append(path)
+            if path not in self._ignored:
+                self._missing.add(path)
                 log.debug('Snakefood raised an error (%s) parsing path %s' % (err, path))
                 return []
 
+        valid_files = []
         for f in files:
-            if not os.path.isfile(path) and path not in missing:
-                self._missing.append(path)
+            if not os.path.isfile(path) and path not in self._ignored:
+                self._ignored.append(path)
                 log.debug('Snakefood returned a wrong path: %s' % (f,))
+            elif os.path.dirname(path) == self._built_in_path and path not in self._ignored:
+                self._ignored.append(path)
+                log.debug('Ignoring built-in module: %s' % (path,))
+            else:
+                valid_files.append(path)
 
-        files = filter(os.path.isfile, files)
-        return files
+        return valid_files
 
     def updateGraph(self, path):
         if path not in self.graph:
-            files = self.dependencies(path)
+            if not self.updated(path) and path in self.known_graph:
+                files = self.known_graph[path]
+            else:
+                files = self.inspect_dependencies(path)
             self.graph[path] = files
             for f in files:
                 self.updateGraph(f)
 
     def updated(self, path):
-        self.hashes.setdefault(path, file_hash(path))
-        return path not in self.known_hashes or self.hashes[path] != self.known_hashes[path]
-
-    def dependenciesUpdated(self, path):
-        if self.updated(path):
-            log.debug('File updated or has failed before: %s' % (path,))
+        if path not in self.known_hashes:
             return True
+
+        if path not in self.hashes:
+            hash = file_hash(path)
+            self.hashes[path] = hash
         else:
-            self.files_tested.add(path)
-            d = any(self.dependenciesUpdated(f) for f in self.graph[path]
-                    if f not in self.files_tested)
-            if d:
+            hash = self.hashes[path]
+
+        return hash != self.known_hashes[path]
+
+    def dependenciesUpdated(self, path, parents=None):
+        parents = parents or []
+
+        if path in self._file_updated:
+            return self._file_updated[path]
+        elif self.updated(path):
+            log.debug('File updated or has failed before: %s' % (path,))
+            updated = True
+        else:
+            childs = self.graph[path]
+            new_parents = parents + [path, ]
+            if len(new_parents) > 30:
+                import ipdb; ipdb.set_trace()
+
+            updated = any(self.dependenciesUpdated(f, new_parents) for f in childs if
+                          f not in new_parents)
+
+            if updated:
                 log.debug('File depends on updated file: %s' % (path,))
-            return d
+
+        self._file_updated[path] = updated
+        return updated
 
     def finalize(self, result):
         for k, v in self.known_hashes.iteritems():
             self.hashes.setdefault(k, v)
+
+        for k, v in self.known_graph.iteritems():
+            self.graph.setdefault(k, v)
 
         for m in self.failed_modules:
             log.debug('Module failed: %s' % (m,))
             self.hashes.pop(m, None)
 
         f = open(self.hash_file, 'w')
-        dump(self.hashes, f)
+        dump({'hashes': self.hashes, 'graph': self.graph}, f)
         f.close()
 
     def wantModule(self, m):
