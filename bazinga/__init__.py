@@ -134,6 +134,8 @@ class Bazinga(Plugin):
             return False
 
     def wantClass(self, cls):
+        # This test is needed in order to prevent tests from being run
+        # even if a module is passed as argument to Nose
         source = inspect.getsourcefile(cls)
         self.updateGraph(source)
         if not self.dependenciesChanged(source):

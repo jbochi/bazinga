@@ -18,7 +18,7 @@ else:
 
 setup(
 	name="Bazinga",
-	version="0.1.2",
+	version="0.2",
 	description="Bazinga is a nose plugin to run tests only if their dependencies were modified",
 	author="Juarez Bochi",
 	author_email="jbochi@gmail.com",
