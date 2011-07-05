@@ -60,10 +60,10 @@ class Bazinga(Plugin):
         valid_files = []
         for f in files:
             if not os.path.isfile(path) and path not in self._ignored:
-                self._ignored.append(path)
+                self._ignored.add(path)
                 log.debug('Snakefood returned a wrong path: %s' % (f,))
             elif os.path.dirname(path) == self._built_in_path and path not in self._ignored:
-                self._ignored.append(path)
+                self._ignored.add(path)
                 log.debug('Ignoring built-in module: %s' % (path,))
             else:
                 valid_files.append(path)
