@@ -132,3 +132,10 @@ class Bazinga(Plugin):
         if not self.dependenciesChanged(source):
             log.debug('Ignoring module %s, since no dependencies have changed' % (source,))
             return False
+
+    def wantClass(self, cls):
+        source = inspect.getsourcefile(cls)
+        self.updateGraph(source)
+        if not self.dependenciesChanged(source):
+            log.debug('Ignoring class %s, since no dependencies have changed' % (source,))
+            return False
