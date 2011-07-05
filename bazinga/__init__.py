@@ -24,8 +24,8 @@ class Bazinga(Plugin):
     name = 'bazinga'
     hash_file = '.nosehashes'
     graph = {}
+    known_graph = {}
     hashes = {}
-    known_hashes = {}
     failed_modules = set()
     files_tested = set()
     _missing = []
@@ -78,11 +78,11 @@ class Bazinga(Plugin):
         return path not in self.known_hashes or self.hashes[path] != self.known_hashes[path]
 
     def dependenciesUpdated(self, path):
-        self.files_tested.add(path)
         if self.updated(path):
             log.debug('File updated or has failed before: %s' % (path,))
             return True
         else:
+            self.files_tested.add(path)
             d = any(self.dependenciesUpdated(f) for f in self.graph[path]
                     if f not in self.files_tested)
             if d:
