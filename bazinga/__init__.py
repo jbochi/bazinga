@@ -1,6 +1,6 @@
+import hashlib
 import inspect
 import os
-import md5
 from nose.plugins import Plugin
 from snakefood.find import find_dependencies
 
@@ -12,14 +12,14 @@ except ImportError:
 
 def file_hash(path):
     f = open(path, 'rb')
-    h = md5.new(f.read()).digest()
+    h = hashlib.md5(f.read()).hexdigest()
     f.close()
     return h
 
 def dependencies(path):
     files = []
     try:
-        files, _ = find_dependencies(path, verbose=False, process_pragmas=False)        
+        files, _ = find_dependencies(path, verbose=False, process_pragmas=False)
     except:
         pass #snakefood has some issues :( ignoring them
 
@@ -37,8 +37,8 @@ class Bazinga(Plugin):
 
     def configure(self, options, conf):
         self.hash_file = os.path.join(conf.workingDir, self.hash_file)
-        if os.path.isfile(self.hash_file):        
-            f = open(self.hash_file, 'r')        
+        if os.path.isfile(self.hash_file):
+            f = open(self.hash_file, 'r')
             self.known_hashes = load(f)
             f.close()
         Plugin.configure(self, options, conf)
@@ -63,15 +63,14 @@ class Bazinga(Plugin):
     def dependenciesUpdated(self, path):
         self.files_tested.add(path)
         if self.updated(path):
-            #print 'file updated %s' % (path,)
             return True
         else:
-            return any(self.dependenciesUpdated(f) for f in self.graph[path] if f not in self.files_tested)        
+            return any(self.dependenciesUpdated(f) for f in self.graph[path]
+                       if f not in self.files_tested)
 
     def finalize(self, result):
         for m in self.failed_modules:
-            #print 'module failed: %s' % (m,)
-            del self.hashes[m]
+            self.hashes.pop(m, None)
 
         f = open(self.hash_file, 'w')
         dump(self.hashes, f)
