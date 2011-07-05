@@ -26,12 +26,8 @@ def dependencies(path):
     files = filter(os.path.isfile, files) #sometimes snakefood returns wrong paths for internal libraries
     return files
 
-class Changed(Plugin):
-    """
-    Activate to add a test id (like #1) to each test name output. Activate
-    with --failed to rerun failing tests only.
-    """
-    name = 'changed'
+class Bazinga(Plugin):
+    name = 'bazinga'
     hash_file = '.nosehashes'
     graph = {}
     hashes = {}
@@ -40,9 +36,11 @@ class Changed(Plugin):
     files_tested = set()
 
     def configure(self, options, conf):
-        f = open(self.hash_file, 'r')
-        self.known_hashes = load(f)
-        f.close()
+        self.hash_file = os.path.join(conf.workingDir, self.hash_file)
+        if os.path.isfile(self.hash_file):        
+            f = open(self.hash_file, 'r')        
+            self.known_hashes = load(f)
+            f.close()
         Plugin.configure(self, options, conf)
 
 
@@ -65,14 +63,14 @@ class Changed(Plugin):
     def dependenciesUpdated(self, path):
         self.files_tested.add(path)
         if self.updated(path):
-            print 'file updated %s' % (path,)
+            #print 'file updated %s' % (path,)
             return True
         else:
             return any(self.dependenciesUpdated(f) for f in self.graph[path] if f not in self.files_tested)        
 
     def finalize(self, result):
         for m in self.failed_modules:
-            print 'module failed: %s' % (m,)
+            #print 'module failed: %s' % (m,)
             del self.hashes[m]
 
         f = open(self.hash_file, 'w')
@@ -84,8 +82,3 @@ class Changed(Plugin):
         self.updateGraph(source)
         if not self.dependenciesUpdated(source):
             return False
-
-import nose
-
-if __name__ == '__main__':
-    nose.main(addplugins=[Changed()])
