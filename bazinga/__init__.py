@@ -53,7 +53,7 @@ class Bazinga(Plugin):
             files, _ = find_dependencies(path, verbose=False, process_pragmas=False)
         except TypeError, err:
             if path not in self._ignored:
-                self._missing.add(path)
+                self._ignored.add(path)
                 log.debug('Snakefood raised an error (%s) parsing path %s' % (err, path))
                 return []
 
