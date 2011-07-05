@@ -23,6 +23,14 @@ Usage
     nosetests --with-bazinga
 
 
+Debugging
+=========
+
+::
+
+    nosetests --with-bazinga --debug=bazinga
+
+
 Requirements
 ============
 
