@@ -24,8 +24,8 @@ class Bazinga(Plugin):
     name = 'bazinga'
     hash_file = '.nosehashes'
     graph = {}
-    known_graph = {}
     hashes = {}
+    known_hashes = {}
     failed_modules = set()
     files_tested = set()
     _missing = []
