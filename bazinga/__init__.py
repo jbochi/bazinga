@@ -1,4 +1,3 @@
-
 import hashlib
 import inspect
 import imp
@@ -61,14 +60,16 @@ class Bazinga(Plugin):
 
         valid_files = []
         for f in files:
-            if not os.path.isfile(path) and path not in self._ignored_files:
-                self._ignored_files.add(path)
-                log.debug('Snakefood returned a wrong path: %s' % (f,))
-            elif os.path.dirname(path) == self._built_in_path and path not in self._ignored_files:
-                self._ignored_files.add(path)
-                log.debug('Ignoring built-in module: %s' % (path,))
+            if not os.path.isfile(f):
+                if f not in self._ignored_files:
+                    self._ignored_files.add(f)
+                    log.debug('Snakefood returned a wrong path: %s' % (f,))
+            elif os.path.dirname(f) == self._built_in_path:
+                if f not in self._ignored_files:
+                    self._ignored_files.add(f)
+                    log.debug('Ignoring built-in module: %s' % (f,))
             else:
-                valid_files.append(path)
+                valid_files.append(f)
 
         return valid_files
 
@@ -77,6 +78,7 @@ class Bazinga(Plugin):
             if not self.fileChanged(path) and path in self._known_graph:
                 files = self._known_graph[path]
             else:
+                log.debug('Inspecting %s dependencies' % (path,))
                 files = self.inspectDependencies(path)
             self._graph[path] = files
             for f in files:
@@ -101,9 +103,9 @@ class Bazinga(Plugin):
             changed = True
         else:
             childs = self._graph[path]
-            new_parents = parents + [path, ]
-            changed = any(self.dependenciesChanged(f, new_parents) for f in childs if
-                          f not in new_parents)
+            parents.append(path)
+            changed = any(self.dependenciesChanged(f, parents) for f in childs if
+                          f not in parents)
 
             if changed:
                 log.debug('File depends on modified file: %s' % (path,))
