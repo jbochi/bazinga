@@ -15,10 +15,19 @@ except ImportError:
 log = logging.getLogger(__name__)
 
 def file_hash(path):
-    f = open(path, 'rb')
-    h = hashlib.md5(f.read()).hexdigest()
-    f.close()
-    return h
+    try:
+        f = open(path, 'rb')
+    except IOError:
+        # sometimes we are not able to open a file, even if
+        # os.path.isfile returns True, e.g., for files inside
+        # an egg. Return "" to assume the file was not modified
+        contents = ""
+    else:
+        contents = f.read()
+        f.close()
+    finally:
+        h = hashlib.md5(contents).hexdigest()
+        return h
 
 class Bazinga(Plugin):
     name = 'bazinga'
