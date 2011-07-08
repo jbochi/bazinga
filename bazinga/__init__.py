@@ -19,13 +19,12 @@ def file_hash(path):
     try:
         f = open(path, 'rb')
         contents = f.read()
+        f.close()
     except IOError:
         # sometimes we are not able to open a file, even if
         # os.path.isfile returns True, e.g., for files inside
         # an egg. Return "" to assume the file was not modified
-        pass
-    finally:        
-        f.close()
+        pass        
     
     h = hashlib.md5(contents).hexdigest()
     return h
