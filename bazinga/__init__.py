@@ -24,8 +24,8 @@ def file_hash(path):
         # sometimes we are not able to open a file, even if
         # os.path.isfile returns True, e.g., for files inside
         # an egg. Return "" to assume the file was not modified
-        pass        
-    
+        pass
+
     h = hashlib.md5(contents).hexdigest()
     return h
 
@@ -58,6 +58,22 @@ class Bazinga(Plugin):
             filename = test.address()[0]
             self._failed_test_modules.add(filename)
 
+    def validateDependency(self, path):
+        if not os.path.isfile(path):
+            if path not in self._ignored_files:
+                self._ignored_files.add(path)
+                log.debug('Snakefood returned a wrong path: %s' % (path,))
+        elif os.path.dirname(path) == self._built_in_path:
+            if path not in self._ignored_files:
+                self._ignored_files.add(path)
+                log.debug('Ignoring built-in module: %s' % (path,))
+        elif path is None:
+            log.debug('Got empty path as dependency' % (path,))
+        else:
+            return True
+
+        return False
+
     def inspectDependencies(self, path):
         try:
             files, _ = find_dependencies(path, verbose=False, process_pragmas=False)
@@ -67,20 +83,7 @@ class Bazinga(Plugin):
                 log.debug('Snakefood raised an error (%s) parsing path %s' % (err, path))
                 return []
 
-        valid_files = []
-        for f in files:
-            if not os.path.isfile(f):
-                if f not in self._ignored_files:
-                    self._ignored_files.add(f)
-                    log.debug('Snakefood returned a wrong path: %s' % (f,))
-            elif os.path.dirname(f) == self._built_in_path:
-                if f not in self._ignored_files:
-                    self._ignored_files.add(f)
-                    log.debug('Ignoring built-in module: %s' % (f,))
-            else:
-                valid_files.append(f)
-
-        return valid_files
+        return filter(self.validateDependency, files)
 
     def updateGraph(self, path):
         if path not in self._graph:
@@ -138,11 +141,15 @@ class Bazinga(Plugin):
         f.close()
 
     def wantModule(self, m):
+        log.debug("Checking if we want module: %s" % (m,))
         source = inspect.getsourcefile(m)
-        self.updateGraph(source)
-        if not self.dependenciesChanged(source):
-            log.debug('Ignoring module %s, since no dependencies have changed' % (source,))
-            return False
+        if source is None:
+            log.debug("Unable to get source for module %s" % (m,))
+        else:
+            self.updateGraph(source)
+            if not self.dependenciesChanged(source):
+                log.debug('Ignoring module %s, since no dependencies have changed' % (source,))
+                return False
 
     def wantClass(self, cls):
         # This test is needed in order to prevent tests from being run
