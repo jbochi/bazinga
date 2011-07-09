@@ -18,7 +18,7 @@ else:
 
 setup(
 	name="Bazinga",
-	version="0.2.3",
+	version="0.2.4",
 	description="Bazinga is a nose plugin to run tests only if their dependencies were modified",
 	author="Juarez Bochi",
 	author_email="jbochi@gmail.com",
@@ -38,7 +38,7 @@ setup(
 		"Environment :: No Input/Output (Daemon)",
 		"Intended Audience :: Developers",
 		"License :: OSI Approved :: MIT License",
-		"Natural Language :: Portuguese (Brazilian)",
+		"Natural Language :: English",
 		"Programming Language :: Python :: 2.5",
 		"Programming Language :: Python :: 2.6",
 		"Programming Language :: Python :: 2.7",
