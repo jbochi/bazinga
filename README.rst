@@ -4,8 +4,15 @@ Bazinga
 
 Bazinga is a nose plugin to run incremental tests.
 
-It recursively detects what are the dependencies for each test module by looking at the modules that are imported. If no dependency file was changed since the last successful test, it skips all the tests in that module.
+Motivation
+==========
 
+Running the complete test suite on large projects can take a significantly large time. This can affect your workflow, specially if you are doing TDD. Some people choose to run only a subset of the tests, specifying them explicitly on the command line, but you can easily forget to run affected tests after any particular change and things can break unnoticed. Using "bazinga" you can rest assured that all (and only) the affected tests will be run.
+
+How it works
+============
+
+Looking at what is imported by each module, "bazinga" recursively detects what are the dependencies for each test. Only tests that were modified or had a file that they depend one changed, are run. Tests that failed are also run.
 
 Installation
 ============
