@@ -156,6 +156,8 @@ class Bazinga(Plugin):
         # even if a module is passed as argument to Nose
         try:
             source = inspect.getsourcefile(cls)
+            if source is None:
+                return None
         except TypeError:
             return None
 
