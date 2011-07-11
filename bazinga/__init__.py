@@ -3,6 +3,7 @@ import inspect
 import imp
 import logging
 from nose.plugins import Plugin
+from nose.util import test_address
 import os
 from snakefood.find import find_dependencies
 import sys
@@ -55,7 +56,7 @@ class Bazinga(Plugin):
     def afterTest(self, test):
         # None means test never ran, False means failed/err
         if test.passed is False:
-            filename = test.address()[0]
+            filename = test_address(test)[0]
             self._failed_test_modules.add(filename)
 
     def validateDependency(self, path):
